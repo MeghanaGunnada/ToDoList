@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin:0;
+            background-image: url("img.jpg");
+            background-size: cover;
+            background-position: center;
+        }
+
+        #container {
+            background-color: lightblue;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 700px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .delete-btn,
+        .edit-btn,
+        .complete-btn,
+        .active-btn {
+            background-color: #ff4d4d;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        .delete-btn:hover,
+        .edit-btn:hover,
+        .complete-btn:hover,
+        .active-btn:hover {
+            background-color: #cc0000;
+        }
+
+        #taskForm {
+            display: none;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>To-Do List App</h1>
+        
+        <table id="taskList">
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </table>
+
+        <button onclick="createNewTask()">Create New Task</button>
+
+        <div id="taskForm">
+            <label for="taskTitle">Task Title:</label>
+            <input type="text" id="taskTitle">
+            <label for="taskDescription">Task Description:</label>
+            <input type="text" id="taskDescription">
+            <label for="taskPriority">Priority:</label>
+            <select id="taskPriority">
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <label for="taskDueDate">Due Date:</label>
+            <input type="date" id="taskDueDate">
+            <button onclick="addTask()">Add Task</button>
+        </div>
+    </div>
+
+    <script>
+        function createNewTask() {
+            document.getElementById("taskForm").style.display = "block";
+        }
+
+        function addTask() {
+            var title = document.getElementById("taskTitle").value;
+            var description = document.getElementById("taskDescription").value;
+            var priority = document.getElementById("taskPriority").value;
+            var dueDate = document.getElementById("taskDueDate").value;
+
+            if (title.trim() !== "") {
+                var taskList = document.getElementById("taskList");
+
+                var row = taskList.insertRow(-1);
+
+                var cell1 = row.insertCell(0);
+                cell1.innerHTML = title;
+
+                var cell2 = row.insertCell(1);
+                cell2.innerHTML = description;
+
+                var cell3 = row.insertCell(2);
+                cell3.innerHTML = priority;
+
+                var cell4 = row.insertCell(3);
+                cell4.innerHTML = dueDate;
+
+                var cell5 = row.insertCell(4);
+                cell5.innerHTML = "Active"; // Default status
+
+                var cell6 = row.insertCell(5);
+                cell6.innerHTML = `
+                    <button class="edit-btn" onclick="editTask(this)">Edit</button>
+                    <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+                    <button class="complete-btn" onclick="completeTask(this)">Complete</button>
+                    <button class="active-btn" onclick="activateTask(this)" style="display:none;">Activate</button>
+                `;
+
+                // Clear input fields
+                document.getElementById("taskTitle").value = "";
+                document.getElementById("taskDescription").value = "";
+                document.getElementById("taskPriority").value = "High";
+                document.getElementById("taskDueDate").value = "";
+
+                // Hide the task form
+                document.getElementById("taskForm").style.display = "none";
+
+                // Sort tasks based on due dates and priority orders
+                sortTasks();
+            } else {
+                alert("Task title cannot be empty");
+            }
+        }
+
+        function editTask(button) {
+            var row = button.parentNode.parentNode;
+            var cells = row.getElementsByTagName("td");
+
+            document.getElementById("taskTitle").value = cells[0].innerHTML;
+            document.getElementById("taskDescription").value = cells[1].innerHTML;
+            document.getElementById("taskPriority").value = cells[2].innerHTML;
+            document.getElementById("taskDueDate").value = cells[3].innerHTML;
+
+            // Hide the original row
+            row.style.display = "none";
+
+            // Display the task form
+            document.getElementById("taskForm").style.display = "block";
+
+            // Replace Add Task button with Update Task button
+            document.querySelector("button[onclick='addTask()']").setAttribute("onclick", "updateTask(" + row.rowIndex + ")");
+            document.querySelector("button[onclick='updateTask()']").innerText = "Update Task";
+        }
+
+        function updateTask(rowIndex) {
+            var title = document.getElementById("taskTitle").value;
+            var description = document.getElementById("taskDescription").value;
+            var priority = document.getElementById("taskPriority").value;
+            var dueDate = document.getElementById("taskDueDate").value;
+
+            if (title.trim() !== "") {
+                var taskList = document.getElementById("taskList");
+
+                // Update the existing row with the edited values
+                var row = taskList.rows[rowIndex];
+                row.cells[0].innerHTML = title;
+                row.cells[1].innerHTML = description;
+                row.cells[2].innerHTML = priority;
+                row.cells[3].innerHTML = dueDate;
+
+                // Show the original row
+                row.style.display = "table-row";
+
+                // Clear input fields
+                document.getElementById("taskTitle").value = "";
+                document.getElementById("taskDescription").value = "";
+                document.getElementById("taskPriority").value = "High";
+                document.getElementById("taskDueDate").value = "";
+
+                // Hide the task form
+                document.getElementById("taskForm").style.display = "none";
+
+                // Replace Update Task button with Add Task button
+                document.querySelector("button[onclick='updateTask()']").setAttribute("onclick", "addTask()");
+                document.querySelector("button[onclick='addTask()']").innerText = "Add Task";
+
+                // Sort tasks based on due dates and priority orders
+                sortTasks();
+            } else {
+                alert("Task title cannot be empty");
+            }
+        }
+
+        function deleteTask(button) {
+            var row = button.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+
+            // Sort tasks based on due dates and priority orders after deletion
+            sortTasks();
+        }
+
+        function completeTask(button) {
+            var row = button.parentNode.parentNode;
+            var statusCell = row.cells[4];
+            statusCell.innerHTML = "Completed";
+
+            // Hide the Complete button and show the Activate button
+            button.style.display = "none";
+            row.querySelector(".active-btn").style.display = "inline";
+
+            // Sort tasks based on due dates and priority orders after completion
+            sortTasks();
+        }
+
+        function activateTask(button) {
+            var row = button.parentNode.parentNode;
+            var statusCell = row.cells[4];
+            statusCell.innerHTML = "Active";
+
+            // Hide the Activate button and show the Complete button
+            button.style.display = "none";
+            row.querySelector(".complete-btn").style.display = "inline";
+
+            // Sort tasks based on due dates and priority orders after activation
+            sortTasks();
+        }
+
+        function sortTasks() {
+            var taskList = document.getElementById("taskList");
+            var rows = taskList.rows;
+
+            // Convert HTMLCollection to array for sorting
+            var rowsArray = Array.from(rows).slice(1); // Exclude the header row
+
+            // Sort tasks based on due dates and priority orders
+            rowsArray.sort(function (a, b) {
+                var dueDateA = new Date(a.cells[3].innerHTML).getTime();
+                var dueDateB = new Date(b.cells[3].innerHTML).getTime();
+
+                if (dueDateA === dueDateB) {
+                    // If due dates are the same, prioritize based on high, medium, and low
+                    var priorityOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
+                    return priorityOrder[a.cells[2].innerHTML] - priorityOrder[b.cells[2].innerHTML];
+                }
+
+                return dueDateA - dueDateB;
+            });
+
+            // Clear the table and re-append sorted rows
+            for (var i = 0; i < rowsArray.length; i++) {
+                taskList.appendChild(rowsArray[i]);
+            }
+        }
+    </script>
+</body>
+</html>

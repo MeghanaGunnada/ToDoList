@@ -1,0 +1,31 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #f5f5f5;
+}
+
+#app {
+  max-width: 600px;
+  margin: 50px auto;
+  background-color: lightblue;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+#task-list {
+  list-style-type: none;
+  padding: 0;
+}
+
+.task {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding: 10px 0;
+}
+
+.task button {
+  margin-left: 10px;
+}
