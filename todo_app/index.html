@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin:0;
+            background-image: url("img.jpg");
+            background-size: cover;
+            background-position: center;
+        }
+
+        #container {
+            background-color: lightblue;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 700px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 15px;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #4caf50;
+            color: white;
+        }
+
+        .delete-btn,
+        .edit-btn,
+        .complete-btn,
+        .active-btn {
+            background-color: #ff4d4d;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-right: 5px;
+        }
+
+        .delete-btn:hover,
+        .edit-btn:hover,
+        .complete-btn:hover,
+        .active-btn:hover {
+            background-color: #cc0000;
+        }
+
+        #taskForm {
+            display: none;
+            margin-top: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #4caf50;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <h1>To-Do List App</h1>
+        
+        <table id="taskList">
+            <tr>
+                <th>Title</th>
+                <th>Description</th>
+                <th>Priority</th>
+                <th>Due Date</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </table>
+
+        <button onclick="createNewTask()">Create New Task</button>
+
+        <div id="taskForm">
+            <label for="taskTitle">Task Title:</label>
+            <input type="text" id="taskTitle">
+            <label for="taskDescription">Task Description:</label>
+            <input type="text" id="taskDescription">
+            <label for="taskPriority">Priority:</label>
+            <select id="taskPriority">
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <label for="taskDueDate">Due Date:</label>
+            <input type="date" id="taskDueDate">
+            <button id="formButton" onclick="addTask()">Add Task</button>
+        </div>
+    </div>
+
+    <script>
+        function createNewTask() {
+            document.getElementById("taskForm").style.display = "block";
+            document.getElementById("formButton").innerText = "Add Task";
+            document.getElementById("formButton").setAttribute("onclick", "addTask()");
+        }
+
+        function addTask() {
+            var title = document.getElementById("taskTitle").value;
+            var description = document.getElementById("taskDescription").value;
+            var priority = document.getElementById("taskPriority").value;
+            var dueDate = document.getElementById("taskDueDate").value;
+
+            if (title.trim() !== "") {
+                var formData = new FormData();
+                formData.append('title', title);
+                formData.append('description', description);
+                formData.append('priority', priority);
+                formData.append('due_date', dueDate);
+
+                fetch('add_task.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          loadTasks();
+                          document.getElementById("taskForm").style.display = "none";
+                          document.getElementById("taskTitle").value = "";
+                          document.getElementById("taskDescription").value = "";
+                          document.getElementById("taskPriority").value = "High";
+                          document.getElementById("taskDueDate").value = "";
+                      } else {
+                          alert(data.message);
+                      }
+                  });
+            } else {
+                alert("Task title cannot be empty");
+            }
+        }
+
+        function editTask(button) {
+            var row = button.parentNode.parentNode;
+            var cells = row.getElementsByTagName("td");
+
+            document.getElementById("taskTitle").value = cells[0].innerHTML;
+            document.getElementById("taskDescription").value = cells[1].innerHTML;
+            document.getElementById("taskPriority").value = cells[2].innerHTML;
+            document.getElementById("taskDueDate").value = cells[3].innerHTML;
+
+            // Display the task form
+            document.getElementById("taskForm").style.display = "block";
+
+            // Replace Add Task button with Update Task button
+            document.getElementById("formButton").innerText = "Update Task";
+            document.getElementById("formButton").setAttribute("onclick", `updateTask(${cells[0].getAttribute('data-id')})`);
+        }
+
+        function updateTask(id) {
+            var title = document.getElementById("taskTitle").value;
+            var description = document.getElementById("taskDescription").value;
+            var priority = document.getElementById("taskPriority").value;
+            var dueDate = document.getElementById("taskDueDate").value;
+
+            if (title.trim() !== "") {
+                var formData = new FormData();
+                formData.append('id', id);
+                formData.append('title', title);
+                formData.append('description', description);
+                formData.append('priority', priority);
+                formData.append('due_date', dueDate);
+
+                fetch('update_task.php', {
+                    method: 'POST',
+                    body: formData
+                }).then(response => response.json())
+                  .then(data => {
+                      if (data.success) {
+                          loadTasks();
+                          document.getElementById("taskForm").style.display = "none";
+                          document.getElementById("taskTitle").value = "";
+                          document.getElementById("taskDescription").value = "";
+                          document.getElementById("taskPriority").value = "High";
+                          document.getElementById("taskDueDate").value = "";
+                      } else {
+                          alert(data.message);
+                      }
+                  });
+            } else {
+                alert("Task title cannot be empty");
+            }
+        }
+
+        function deleteTask(button) {
+            var row = button.parentNode.parentNode;
+            var id = row.getElementsByTagName("td")[0].getAttribute('data-id');
+
+            fetch('delete_task.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `id=${id}`
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      loadTasks();
+                  } else {
+                      alert(data.message);
+                  }
+              });
+        }
+
+        function completeTask(button) {
+            var row = button.parentNode.parentNode;
+            var id = row.getElementsByTagName("td")[0].getAttribute('data-id');
+
+            fetch('complete_task.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `id=${id}`
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      loadTasks();
+                  } else {
+                      alert(data.message);
+                  }
+              });
+        }
+
+        function activateTask(button) {
+            var row = button.parentNode.parentNode;
+            var id = row.getElementsByTagName("td")[0].getAttribute('data-id');
+
+            fetch('activate_task.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: `id=${id}`
+            }).then(response => response.json())
+              .then(data => {
+                  if (data.success) {
+                      loadTasks();
+                  } else {
+                      alert(data.message);
+                  }
+              });
+        }
+
+        function loadTasks() {
+            fetch('get_tasks.php')
+                .then(response => response.json())
+                .then(data => {
+                    var taskList = document.getElementById("taskList");
+                    // Clear existing rows except the header
+                    taskList.innerHTML = `
+                        <tr>
+                            <th>Title</th>
+                            <th>Description</th>
+                            <th>Priority</th>
+                            <th>Due Date</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    `;
+                    data.tasks.forEach(task => {
+                        var row = taskList.insertRow(-1);
+                        row.innerHTML = `
+                            <td data-id="${task.id}">${task.title}</td>
+                            <td>${task.description}</td>
+                            <td>${task.priority}</td>
+                            <td>${task.due_date}</td>
+                            <td>${task.status}</td>
+                            <td>
+                                <button class="edit-btn" onclick="editTask(this)">Edit</button>
+                                <button class="delete-btn" onclick="deleteTask(this)">Delete</button>
+                                <button class="complete-btn" onclick="completeTask(this)" style="display:${task.status === 'Active' ? 'inline' : 'none'};">Complete</button>
+                                <button class="active-btn" onclick="activateTask(this)" style="display:${task.status === 'Completed' ? 'inline' : 'none'};">Activate</button>
+                            </td>
+                        `;
+                    });
+                });
+        }
+
+        // Load tasks when the page loads
+        document.addEventListener("DOMContentLoaded", loadTasks);
+    </script>
+</body>
+</html>
